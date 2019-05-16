@@ -1,0 +1,150 @@
+
+#include <Wire.h>
+#define uchar unsigned char
+
+uchar t;
+//void send_data(short a1,short b1,short c1,short d1,short e1,short f1);
+uchar data[16];
+
+const int trigPin = 12;
+const int echoPin = 13;
+// defines variables
+long duration;
+int distance;
+
+int q;
+
+void setup()
+{
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+  Wire.begin();        // join i2c bus (address optional for master)
+  Serial.begin(9600);  // start serial for output
+  t = 0;
+  pinMode(7, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(4, OUTPUT);
+
+  pinMode(10, OUTPUT);
+  pinMode(11, OUTPUT);
+
+}
+
+void getData()
+{
+  Wire.requestFrom(9, 16);    // request 16 bytes from slave device #9 //prduces array of values
+  while (Wire.available())   // slave may send less than requested
+  {
+    data[t] = Wire.read(); // receive a byte as character
+    if (t < 15)
+      t++;
+    else
+      t = 0;
+  }
+}
+
+void leftturn (int amt){
+    digitalWrite (7, LOW);
+    digitalWrite (6, HIGH);
+    digitalWrite (5, LOW);
+    digitalWrite (4, LOW);
+    analogWrite (10, 100);
+    analogWrite (11, 100);
+    Serial.println("turn left");
+    delay (amt); //turntuern left
+}
+
+
+void rightturn (int amt){
+    digitalWrite (7, LOW);
+    digitalWrite (6, LOW);
+    digitalWrite (5, LOW);
+    digitalWrite (4, HIGH);
+    analogWrite (10, 100);
+    analogWrite (11, 100);
+    Serial.println("turn right");
+    delay (amt); //turntuern right
+}
+
+void gostraight (int amt){
+    digitalWrite (7, LOW);
+    digitalWrite (6, HIGH);
+    digitalWrite (5, LOW);
+    digitalWrite (4, HIGH);
+    analogWrite (10, q);
+    analogWrite (11, q);
+    Serial.println("turn go straibht");
+    delay (amt); //turntuern right
+}
+
+void halt (int amt){
+    digitalWrite (7, LOW);
+    digitalWrite (6, LOW);
+    digitalWrite (5, LOW);
+    digitalWrite (4, LOW);
+    analogWrite (10, 100);
+    analogWrite (11, 100);
+    Serial.println("STAAAHHHPPP");
+    delay (amt); //turntuern right
+}
+
+void follow(){
+  if (data[14]>30 && data[8]>30){ //if there is othig go straight
+gostraight (100);
+//Serial.println("straight");
+  } else if (data[14]<30 && data[8]>30){ //if there is a 14=yes go left
+rightturn(5);
+//Serial.println("left");
+  } else if(data[14]>30 && data[8]<30){ //if lie left tur right
+leftturn(5);
+//Serial.println("right");
+  } 
+}
+
+void rr(){
+  Serial.print("data[10]   ");
+  Serial.print(data[10]);
+  Serial.print("   data[14]   ");
+  Serial.println(data[14]);
+  delay(200);
+}
+
+
+
+void loop()
+{// Clears the trigPin
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+// Sets the trigPin on HIGH state for 10 micro seconds
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+// Reads the echoPin, returns the sound wave travel time in microseconds
+duration = pulseIn(echoPin, HIGH);
+// Calculating the distance
+distance= duration*0.034/2;
+// Prints the distance on the Serial Monitor
+//Serial.print("Distance: ");
+//Serial.println(distance);
+getData();
+//follow();
+//rr();
+
+if (distance>20){
+  q = 100;
+  follow();
+} else if (distance<20 && distance>15){
+  q = 75;
+  follow();
+} else if (distance<15 && distance>10){
+  q = 50;
+  follow();
+} else {
+halt(100);
+}
+
+}
+
+
+
